@@ -29,10 +29,10 @@ type Config struct {
 	ROSHost         string
 	ROSUser         string
 	ROSPass         string
-	CFAPIToken      string
-	CFZoneID        string
-	CFRecordID      string
-	CFRecordName    string
+	DNSAPIToken     string
+	DNSZoneID       string
+	DNSRecordID     string
+	DNSRecordName   string
 	RecordTTL       int
 }
 
@@ -61,24 +61,24 @@ func setConfig() (Config, error) {
 		return Config{}, errors.New("ROS_PASS secret is required")
 	}
 
-	cfApiToken, err := readSecret("cf_api_token")
-	if err != nil || cfApiToken == "" {
-		return Config{}, errors.New("CF_API_TOKEN secret is required")
+	dnsApiToken, err := readSecret("dns_api_token")
+	if err != nil || dnsApiToken == "" {
+		return Config{}, errors.New("DNS_API_TOKEN secret is required")
 	}
 
-	cfZoneId := os.Getenv("CF_ZONE_ID")
-	if cfZoneId == "" {
-		return Config{}, errors.New("CF_ZONE_ID is required")
+	dnsZoneId := os.Getenv("DNS_ZONE_ID")
+	if dnsZoneId == "" {
+		return Config{}, errors.New("DNS_ZONE_ID is required")
 	}
 
-	cfRecordId := os.Getenv("CF_RECORD_ID")
-	if cfRecordId == "" {
-		return Config{}, errors.New("CF_RECORD_ID is required")
+	dnsRecordId := os.Getenv("DNS_RECORD_ID")
+	if dnsRecordId == "" {
+		return Config{}, errors.New("DNS_RECORD_ID is required")
 	}
 
-	cfRecordName := os.Getenv("CF_RECORD_NAME")
-	if cfRecordName == "" {
-		return Config{}, errors.New("CF_RECORD_NAME is required")
+	dnsRecordName := os.Getenv("DNS_RECORD_NAME")
+	if dnsRecordName == "" {
+		return Config{}, errors.New("DNS_RECORD_NAME is required")
 	}
 
 	// Check if optional variables are set, if not set defaults
@@ -113,10 +113,10 @@ func setConfig() (Config, error) {
 		ROSHost:         rosHost,
 		ROSUser:         rosUser,
 		ROSPass:         rosPass,
-		CFAPIToken:      cfApiToken,
-		CFZoneID:        cfZoneId,
-		CFRecordID:      cfRecordId,
-		CFRecordName:    cfRecordName,
+		DNSAPIToken:     dnsApiToken,
+		DNSZoneID:       dnsZoneId,
+		DNSRecordID:     dnsRecordId,
+		DNSRecordName:   dnsRecordName,
 		RecordTTL:       recordTTL,
 	}, nil
 }
@@ -141,7 +141,7 @@ func NewDaemon(cfg Config, log *slog.Logger) *Daemon {
 		Handler: mux,
 	}
 
-	d.cfclt = cloudflare.NewClient(option.WithAPIToken(cfg.CFAPIToken))
+	d.cfclt = cloudflare.NewClient(option.WithAPIToken(cfg.DNSAPIToken))
 	d.httpclt = &http.Client{}
 
 	return d
@@ -189,12 +189,12 @@ func fetchIP(ctx context.Context, cfg Config, client *http.Client) (net.IP, erro
 func updateDNS(ctx context.Context, cfg Config, client *cloudflare.Client, at time.Time, ip string) error {
 	_, err := client.DNS.Records.Edit(
 		ctx,
-		cfg.CFRecordID,
+		cfg.DNSRecordID,
 		dns.RecordEditParams{
-			ZoneID: cloudflare.F(cfg.CFZoneID),
+			ZoneID: cloudflare.F(cfg.DNSZoneID),
 			Body: dns.ARecordParam{
 				Content: cloudflare.F(ip),
-				Name:    cloudflare.F(cfg.CFRecordName),
+				Name:    cloudflare.F(cfg.DNSRecordName),
 				TTL:     cloudflare.F(dns.TTL(cfg.RecordTTL)),
 				Type:    cloudflare.F(dns.ARecordType("A")),
 				Comment: cloudflare.F("Last update via ROS ddnsd: " + at.UTC().Format(time.UnixDate)),
