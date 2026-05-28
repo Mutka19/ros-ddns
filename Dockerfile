@@ -1,7 +1,7 @@
 FROM golang:1.26-alpine AS builder
 WORKDIR /app
 
-COPY certs/my-root-cert.crt /usr/local/share/ca-certificates/my-root-cert.crt
+COPY certs/*.crt /usr/local/share/ca-certificates/
 RUN apk add --no-cache ca-certificates && update-ca-certificates
 
 COPY go.mod go.sum ./
