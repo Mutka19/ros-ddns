@@ -1,4 +1,4 @@
-module ros-ddnsd
+module ros-ddns
 
 go 1.23.4
 
