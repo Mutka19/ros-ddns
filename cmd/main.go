@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"ros-ddns/internal/util"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,14 +36,6 @@ type Config struct {
 	RecordTTL       int
 }
 
-func readSecret(name string) (string, error) {
-	data, err := os.ReadFile("/run/secrets/" + name)
-	if err != nil {
-		return "", fmt.Errorf("reading secret %q: %w", name, err)
-	}
-	return strings.TrimSpace(string(data)), nil
-}
-
 func setConfig() (Config, error) {
 	// Ensure all required variables and secrets are loaded
 	rosHost := os.Getenv("ROS_HOST")
@@ -51,17 +43,17 @@ func setConfig() (Config, error) {
 		return Config{}, errors.New("ROS_HOST is required")
 	}
 
-	rosUser, err := readSecret("ros_user")
+	rosUser, err := util.ReadSecret("ros_user")
 	if err != nil || rosUser == "" {
 		return Config{}, errors.New("ROS_USER secret is required")
 	}
 
-	rosPass, err := readSecret("ros_pass")
+	rosPass, err := util.ReadSecret("ros_pass")
 	if err != nil || rosPass == "" {
 		return Config{}, errors.New("ROS_PASS secret is required")
 	}
 
-	dnsApiToken, err := readSecret("dns_api_token")
+	dnsApiToken, err := util.ReadSecret("dns_api_token")
 	if err != nil || dnsApiToken == "" {
 		return Config{}, errors.New("DNS_API_TOKEN secret is required")
 	}
