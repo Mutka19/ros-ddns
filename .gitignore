@@ -33,3 +33,9 @@ go.work.sum
 
 # Secrets
 secrets/
+
+# Docker compose
+docker-compose.yml
+
+# Certificates
+certs/*.crt
