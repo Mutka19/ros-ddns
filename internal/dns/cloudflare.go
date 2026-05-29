@@ -23,8 +23,27 @@ type CloudflareDNSProvider struct {
 	ttl        int
 }
 
+// Update sends an API request to the Cloudflare zone to update the specified DNS record
+func (c *CloudflareDNSProvider) Update(ctx context.Context, ip string, at time.Time) error {
+	_, err := c.client.DNS.Records.Edit(
+		ctx,
+		c.recordId,
+		dns.RecordEditParams{
+			ZoneID: cloudflare.F(c.zoneId),
+			Body: dns.ARecordParam{
+				Content: cloudflare.F(ip),
+				Name:    cloudflare.F(c.recordName),
+				TTL:     cloudflare.F(dns.TTL(c.ttl)),
+				Type:    cloudflare.F(dns.ARecordType("A")),
+				Comment: cloudflare.F("Last update via ROS ddnsd: " + at.UTC().Format(time.UnixDate)),
+			},
+		},
+	)
+	return err
+}
+
 // New initializes and returns a pointer to CloudflareDNSProvider
-func New() (*CloudflareDNSProvider, error) {
+func NewCloudflareProvider() (Provider, error) {
 	apiToken, err := util.ReadSecret("dns_api_token")
 	if err != nil || apiToken == "" {
 		return nil, errors.New("dns_api_token secret is required")
@@ -65,21 +84,7 @@ func New() (*CloudflareDNSProvider, error) {
 	}, nil
 }
 
-// Update sends an API request to the Cloudflare zone to update the specified DNS record
-func (c *CloudflareDNSProvider) Update(ctx context.Context, ip string, at time.Time) error {
-	_, err := c.client.DNS.Records.Edit(
-		ctx,
-		c.recordId,
-		dns.RecordEditParams{
-			ZoneID: cloudflare.F(c.zoneId),
-			Body: dns.ARecordParam{
-				Content: cloudflare.F(ip),
-				Name:    cloudflare.F(c.recordName),
-				TTL:     cloudflare.F(dns.TTL(c.ttl)),
-				Type:    cloudflare.F(dns.ARecordType("A")),
-				Comment: cloudflare.F("Last update via ROS ddnsd: " + at.UTC().Format(time.UnixDate)),
-			},
-		},
-	)
-	return err
+func init() {
+	// Register Cloudflare as provider when package is initialized
+	RegisterProvider("cloudflare", NewCloudflareProvider)
 }
