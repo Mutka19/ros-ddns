@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"ros-ddns/internal/util"
+	"ros-ddns/internal/util/environment"
 
 	"github.com/cloudflare/cloudflare-go/v6"
 	"github.com/cloudflare/cloudflare-go/v6/dns"
@@ -44,7 +44,7 @@ func (c *CloudflareDNSProvider) Update(ctx context.Context, ip string, at time.T
 
 // New initializes and returns a pointer to CloudflareDNSProvider
 func NewCloudflareProvider() (Provider, error) {
-	apiToken, err := util.ReadSecret("dns_api_token")
+	apiToken, err := environment.ReadSecret("dns_api_token")
 	if err != nil || apiToken == "" {
 		return nil, errors.New("dns_api_token secret is required")
 	}
