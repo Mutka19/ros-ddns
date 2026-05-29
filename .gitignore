@@ -36,3 +36,6 @@ secrets/
 
 # Docker compose
 docker-compose.yml
+
+# Certificates
+certs/*.crt
